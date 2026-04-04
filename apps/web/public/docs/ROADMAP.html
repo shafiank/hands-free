@@ -1,0 +1,1586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hands Free Roadmap</title>
+<meta name="description" content="Hands Free roadmap - shipped features and upcoming plans for the AI desktop agent.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0c0d0f;
+    --surface: #131518;
+    --surface2: #1a1d22;
+    --border: #2a2d34;
+    --border-light: #1f2228;
+    --text: #e8eaed;
+    --text-muted: #7a7f8a;
+    --text-dim: #4a4f5a;
+    --green: #4ade80;
+    --green-dim: rgba(74,222,128,0.12);
+    --green-border: rgba(74,222,128,0.25);
+    --amber: #fbbf24;
+    --amber-dim: rgba(251,191,36,0.1);
+    --amber-border: rgba(251,191,36,0.25);
+    --red: #f87171;
+    --red-dim: rgba(248,113,113,0.1);
+    --red-border: rgba(248,113,113,0.25);
+    --blue: #60a5fa;
+    --blue-dim: rgba(96,165,250,0.1);
+    --blue-border: rgba(96,165,250,0.25);
+    --purple: #a78bfa;
+    --purple-dim: rgba(167,139,250,0.08);
+    --purple-border: rgba(167,139,250,0.2);
+    --accent: #4ade80;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* â”€â”€â”€ NAV â”€â”€â”€ */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(12,13,15,0.85);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border-light);
+    padding: 0 32px;
+    display: flex; align-items: center; gap: 20px; height: 56px;
+  }
+  .nav-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 17px;
+    color: var(--text); text-decoration: none;
+    display: flex; align-items: center; gap: 8px;
+    margin-right: auto;
+  }
+  .nav-logo span { font-size: 20px; }
+  .nav-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; color: var(--text-muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 2px 8px; border-radius: 20px;
+  }
+  .nav-link {
+    font-size: 13px; color: var(--text-muted);
+    text-decoration: none; transition: color .15s;
+  }
+  .nav-link:hover { color: var(--text); }
+
+  /* â”€â”€â”€ HERO â”€â”€â”€ */
+  .hero {
+    padding: 72px 32px 56px;
+    max-width: 900px; margin: 0 auto;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .hero-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; color: var(--accent);
+    letter-spacing: .12em; text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .hero-eyebrow::before {
+    content: ''; display: block;
+    width: 20px; height: 1px; background: var(--accent);
+  }
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 800; line-height: 1.1;
+    letter-spacing: -.02em;
+    margin-bottom: 16px;
+  }
+  .hero p {
+    font-size: 16px; color: var(--text-muted);
+    max-width: 560px; font-weight: 300;
+    margin-bottom: 32px;
+  }
+  .hero-meta {
+    display: flex; flex-wrap: wrap; gap: 24px;
+  }
+  .hero-meta-item {
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .hero-meta-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--text-dim);
+  }
+  .hero-meta-value {
+    font-size: 14px; font-weight: 500; color: var(--text);
+  }
+
+  /* â”€â”€â”€ LEGEND â”€â”€â”€ */
+  .legend-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border-light);
+    padding: 14px 32px;
+    display: flex; flex-wrap: wrap; gap: 20px;
+    align-items: center;
+  }
+  .legend-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: .1em;
+    margin-right: 4px;
+  }
+  .legend-items { display: flex; flex-wrap: wrap; gap: 12px; }
+  .legend-item {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--text-muted);
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .dot-green { background: var(--green); }
+  .dot-amber { background: var(--amber); }
+  .dot-red { background: var(--red); }
+  .dot-blue { background: var(--blue); }
+  .dot-purple { background: var(--purple); }
+
+  /* â”€â”€â”€ LAYOUT â”€â”€â”€ */
+  .content {
+    max-width: 900px; margin: 0 auto;
+    padding: 0 32px 80px;
+  }
+
+  /* â”€â”€â”€ SECTION HEADER â”€â”€â”€ */
+  .release-header {
+    display: flex; align-items: baseline;
+    gap: 14px; margin: 56px 0 28px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-light);
+    position: relative;
+  }
+  .release-header::before {
+    content: ''; position: absolute;
+    left: 0; bottom: -1px; width: 40px; height: 1px;
+    background: var(--accent);
+  }
+  .release-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px; font-weight: 500;
+    color: var(--accent);
+    background: var(--green-dim);
+    border: 1px solid var(--green-border);
+    padding: 3px 10px; border-radius: 20px;
+  }
+  .release-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px; font-weight: 700;
+    color: var(--text);
+  }
+  .release-sub {
+    font-size: 13px; color: var(--text-muted);
+    font-weight: 300; margin-top: 4px;
+  }
+  .release-date {
+    margin-left: auto;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; color: var(--text-dim);
+  }
+
+  /* â”€â”€â”€ PHASE HEADER â”€â”€â”€ */
+  .phase-header {
+    margin: 48px 0 20px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .phase-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-muted); padding: 2px 8px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+  }
+  .phase-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 17px; font-weight: 700;
+    color: var(--text);
+  }
+
+  /* â”€â”€â”€ CARD â”€â”€â”€ */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin-bottom: 10px;
+    transition: border-color .15s, background .15s;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0 16px;
+    align-items: start;
+  }
+  .card:hover {
+    border-color: var(--border);
+    background: var(--surface2);
+  }
+
+  .card-icon {
+    width: 36px; height: 36px;
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    background: var(--surface2);
+    border: 1px solid var(--border-light);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .card-body { min-width: 0; }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px; font-weight: 700;
+    color: var(--text); margin-bottom: 4px;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .card-subtitle {
+    font-size: 11px; color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    text-transform: uppercase; letter-spacing: .08em;
+  }
+  .card-desc {
+    font-size: 13.5px; color: var(--text-muted);
+    line-height: 1.6; margin-top: 6px;
+    font-weight: 300;
+  }
+  .card-tags {
+    display: flex; flex-wrap: wrap; gap: 5px;
+    margin-top: 10px;
+  }
+  .tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: var(--text-dim);
+    background: var(--surface2);
+    border: 1px solid var(--border-light);
+    padding: 2px 7px; border-radius: 20px;
+  }
+
+  .card-status {
+    display: flex; align-items: center; gap: 5px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; font-weight: 500;
+    padding: 4px 10px; border-radius: 20px;
+    white-space: nowrap; flex-shrink: 0;
+    align-self: start;
+  }
+  .status-shipped {
+    color: var(--green);
+    background: var(--green-dim);
+    border: 1px solid var(--green-border);
+  }
+  .status-bug {
+    color: var(--red);
+    background: var(--red-dim);
+    border: 1px solid var(--red-border);
+  }
+  .status-open {
+    color: var(--blue);
+    background: var(--blue-dim);
+    border: 1px solid var(--blue-border);
+  }
+  .status-planned {
+    color: var(--amber);
+    background: var(--amber-dim);
+    border: 1px solid var(--amber-border);
+  }
+  .status-vision {
+    color: var(--purple);
+    background: var(--purple-dim);
+    border: 1px solid var(--purple-border);
+  }
+  .status-backlog {
+    color: var(--text-dim);
+    background: transparent;
+    border: 1px solid var(--border);
+  }
+
+  /* â”€â”€â”€ STAR CARD â”€â”€â”€ */
+  .card.featured {
+    border-color: rgba(74,222,128,0.2);
+    background: linear-gradient(135deg, rgba(74,222,128,0.04) 0%, var(--surface) 60%);
+  }
+
+  /* â”€â”€â”€ GRID (2-col for some sections) â”€â”€â”€ */
+  .card-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .card-grid .card { margin-bottom: 0; }
+
+  /* â”€â”€â”€ FOOTER â”€â”€â”€ */
+  footer {
+    border-top: 1px solid var(--border-light);
+    padding: 32px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+  footer strong { color: var(--text-muted); }
+  footer .gecko { font-size: 22px; display: block; margin-bottom: 8px; }
+  footer a {
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color .15s;
+  }
+  footer a:hover {
+    color: var(--accent);
+  }
+
+  /* â”€â”€â”€ RESPONSIVE â”€â”€â”€ */
+  @media (max-width: 640px) {
+    nav { padding: 0 16px; gap: 12px; }
+    .nav-link { display: none; }
+    .hero, .content { padding-left: 16px; padding-right: 16px; }
+    .legend-bar { padding: 12px 16px; }
+    .card { grid-template-columns: auto 1fr; }
+    .card-status { grid-column: 2; }
+    .card-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="https://handsfree.app" class="nav-logo"><span>ðŸ¦Ž</span> Hands Free</a>
+  <a href="https://docs.handsfree.app" class="nav-link">Docs</a>
+  <a href="https://handsfree.app" class="nav-link">Download</a>
+</nav>
+
+<div class="hero">
+  <div class="hero-eyebrow">Roadmap</div>
+  <h1>Hands Free Roadmap</h1>
+  <p>What we've shipped and what's coming next</p>
+</div>
+
+<div class="legend-bar">
+  <span class="legend-label">Legend</span>
+  <div class="legend-items">
+    <div class="legend-item"><span class="dot dot-green"></span> Shipped</div>
+    <div class="legend-item"><span class="dot dot-blue"></span> Coming Soon</div>
+    <div class="legend-item"><span class="dot dot-amber"></span> Future</div>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       SHIPPED â€“ v9.0.0 FOR THE PEOPLE (CURRENT)
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="release-header">
+    <span class="release-tag" style="color:var(--green);background:var(--green-dim);border-color:var(--green-border);">Shipped</span>
+    <div>
+      <div class="release-title">v9.0.0 â€” For the People <span style="font-size:0.75em;opacity:0.6;font-weight:400;">April 2026</span></div>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card featured">
+      <div class="card-icon">ðŸ§©</div>
+      <div class="card-body">
+        <div class="card-title">Agent Skills Import</div>
+        <div class="card-desc">Native SKILL.md support. Import from Claude Code, Codex, Copilot, Cursor via GitHub URL, local folder, or paste. Skills work across Chat, Codework, Browser, Spotlight, and Hands Free Studio.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card featured">
+      <div class="card-icon">ðŸ› ï¸</div>
+      <div class="card-body">
+        <div class="card-title">Hands Free Codework</div>
+        <div class="card-desc">Autonomous coding agent. Select project folder, describe task, pick model, watch live diffs. 3-panel GUI with file tree, activity log, and changes panel. Session history.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card featured">
+      <div class="card-icon">ðŸ¢</div>
+      <div class="card-body">
+        <div class="card-title">Organization â€” Multi-Agent Teams</div>
+        <div class="card-desc">Create departments, assign agents, set leaders, delegate tasks. CEO agent routes work. Export/import Company Packs.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card featured">
+      <div class="card-icon">ðŸ–¥ï¸</div>
+      <div class="card-body">
+        <div class="card-title">Computer Use</div>
+        <div class="card-desc">Desktop automation via screenshots, mouse clicks, keyboard input, and scrolling. Screenshots inline in chat. Safety Mode approval required.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ“…</div>
+      <div class="card-body">
+        <div class="card-title">Calendar Sync</div>
+        <div class="card-desc">Google Calendar, Apple Calendar, Outlook, and any CalDAV server. Unified in Planner with conflict detection.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ”Œ</div>
+      <div class="card-body">
+        <div class="card-title">7 Integrations</div>
+        <div class="card-desc">Notion, Todoist, Spotify, Smart Home (Home Assistant), Google Drive, GitHub, Google Docs. All configurable in Settings.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ§‘â€ðŸ’»</div>
+      <div class="card-body">
+        <div class="card-title">DevKit</div>
+        <div class="card-desc">Developer Mode: API Playground, Debug Panel, CLI, comprehensive tool/skill/provider reference documentation.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ”„</div>
+      <div class="card-body">
+        <div class="card-title">Migration Importer</div>
+        <div class="card-desc">Import from ChatGPT, Claude, Copilot, Gemini, OpenClaw, Hermes. Settings > Import from Another Tool.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ”—</div>
+      <div class="card-body">
+        <div class="card-title">MCP Server Support</div>
+        <div class="card-desc">Model Context Protocol for external tools. 5 built-in templates.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸŽ¨</div>
+      <div class="card-body">
+        <div class="card-title">Hands Free Warm Theme</div>
+        <div class="card-desc">New default: deep navy + emerald. 5 themes total. Light mode default on first launch.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ’¬</div>
+      <div class="card-body">
+        <div class="card-title">Messaging Gateway</div>
+        <div class="card-desc">Slack and Signal integration alongside existing Telegram, Discord, WhatsApp.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ¤–</div>
+      <div class="card-body">
+        <div class="card-title">9 Professional Agents</div>
+        <div class="card-desc">CEO, CTO, Marketing Director, Research Analyst, Project Manager, and more. Each with 200-400 word system prompts.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       SHIPPED â€“ v8.0.0 DISCOVER 2.0
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="release-header" style="margin-top: 3rem;">
+    <span class="release-tag" style="color:var(--green);background:var(--green-dim);border-color:var(--green-border);">Shipped</span>
+    <div>
+      <div class="release-title">v8.0.0 â€” Discover 2.0 <span style="font-size:0.75em;opacity:0.6;font-weight:400;">March 2026</span></div>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card current">
+      <div class="card-icon">ðŸ”§</div>
+      <div class="card-body">
+        <div class="card-title">Token Compressor</div>
+        <div class="card-desc">Three intelligent compression levels in Settings reduce context bloat and redundancy. Automatically summarize conversations to fit more history in your token budget without losing important context.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸž</div>
+      <div class="card-body">
+        <div class="card-title">In-App Toast Notifications</div>
+        <div class="card-desc">Lightweight notifications now appear directly in the Hands Free interface with customizable timing. Less intrusive than system popups and fully respecting your privacy by staying within the app.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ§ </div>
+      <div class="card-body">
+        <div class="card-title">System Prompt Intelligence</div>
+        <div class="card-desc">Dynamic prompt tuning adapts to your usage patterns and context window constraints. Hands Free automatically optimizes system prompts for maximum reasoning capability with fewer errors.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ”’</div>
+      <div class="card-body">
+        <div class="card-title">Admin Security Hardening</div>
+        <div class="card-desc">Enhanced access control, improved audit logging, and stricter permission validation for multi-user deployments. Better security boundaries between roles.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ–¼ï¸</div>
+      <div class="card-body">
+        <div class="card-title">Custom Skill iframe Sandbox</div>
+        <div class="card-desc">Custom Skills now run in isolated iframe sandboxes for better security. Prevents accidental or malicious interference with the main app while allowing safe skill development.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+  </div>
+    <div class="card">
+      <div class="card-icon">ðŸ“¦</div>
+      <div class="card-body">
+        <div class="card-title">Hands Free Wrapped</div>
+        <div class="card-desc">Weekly AI companion recap every Monday 8 AM. Auto-generated stats card shows: task count, top tool, most active day, peak hour, streak, and weekly badge. Export as PNG (Square 1:1 or Story 9:16). Share to Discover feed. Light/Dark mode with theme-aware design (Hands Free, Obsidian, Snowfield, Neon).</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ’¬</div>
+      <div class="card-body">
+        <div class="card-title">Discover Upgrades</div>
+        <div class="card-desc">GIF reactions, reply threads, repost with attribution, AI personality posts, weekly Wrapped sharing, NSFW content filtering, and DSGVO-compliant profile deletion. Rich social interactions while maintaining privacy and compliance.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       SHIPPED â€“ v7.5.0 THE SOCIAL UPDATE
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="release-header" style="margin-top: 3rem;">
+    <span class="release-tag" style="color:var(--green);background:var(--green-dim);border-color:var(--green-border);">Shipped</span>
+    <div>
+      <div class="release-title">v7.5.0 â€” The Social Update <span style="font-size:0.75em;opacity:0.6;font-weight:400;">March 2026</span></div>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">ðŸ§­</div>
+      <div class="card-body">
+        <div class="card-title">Discover Feed</div>
+        <div class="card-desc">Global activity feed showing what the Hands Free community is building. Gamertag system, upvotes, category filters, blurred preview for non-members. Privacy-first: no personal data collected.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ”</div>
+      <div class="card-body">
+        <div class="card-title">Spotlight + Vision</div>
+        <div class="card-desc">Floating search bar accessible from anywhere on your desktop via Cmd/Ctrl+Shift+S. Ask Hands Free anything without opening the main window. Eye button captures your screen for visual context â€” ask about anything visible on your desktop.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ’¬</div>
+      <div class="card-body">
+        <div class="card-title">Mini-Chat Mode</div>
+        <div class="card-desc">Compact always-on-top chat window. Toggle from the chat header. Stays on top of other apps so Hands Free is always reachable.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ””</div>
+      <div class="card-body">
+        <div class="card-title">Notification Center</div>
+        <div class="card-desc">Dedicated page for all notifications with read/unread state, category filters, and admin broadcast support. Replaces the old inline notification cards.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ¤</div>
+      <div class="card-body">
+        <div class="card-title">Agent Swarm Redesign</div>
+        <div class="card-desc">Hub-and-spoke node visualization, task history, quick delegate, and chat integration hints. mDNS state now syncs reliably with the Settings toggle.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸŽµ</div>
+      <div class="card-body">
+        <div class="card-title">Sound Notifications</div>
+        <div class="card-desc">Audible feedback when tasks complete, notifications arrive, or Swarm tasks finish. Theme-aware sounds, configurable in Settings.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ“…</div>
+      <div class="card-body">
+        <div class="card-title">Calendar Month View + .ics Export</div>
+        <div class="card-desc">Full month grid with event previews and click-to-navigate. Download your plan as a .ics calendar file without connecting a provider.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ¤–</div>
+      <div class="card-body">
+        <div class="card-title">Friend Mode + Buddy Intelligence Fixed</div>
+        <div class="card-desc">Both proactive systems now fire independently of Autonomous Mode. Morning greetings, idle check-ins, and meeting reminders work as configured.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       SHIPPED â€“ v7.2.1 HOTFIX
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="release-header" style="margin-top: 3rem;">
+    <span class="release-tag" style="color:var(--green);background:var(--green-dim);border-color:var(--green-border);">Shipped</span>
+    <div>
+      <div class="release-title">v7.2.1 â€” Hotfix <span style="font-size:0.75em;opacity:0.6;font-weight:400;">March 2026</span></div>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">âš¡</div>
+      <div class="card-body">
+        <div class="card-title">System Prompt Optimization</div>
+        <div class="card-desc">Reduced token usage by moving dynamic context to on-demand tool calls. Free-tier models no longer hit rate limits on simple messages.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸŒ</div>
+      <div class="card-body">
+        <div class="card-title">Browser Agent with Safety Controls</div>
+        <div class="card-desc">Autonomous web browsing with DOM settle delay, auto/manual approval modes, dangerous action blacklist, CAPTCHA detection, and real-time action log.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ¤</div>
+      <div class="card-body">
+        <div class="card-title">Agent Swarm (Alpha)</div>
+        <div class="card-desc">LAN peer discovery via mDNS. Hands Free instances on the same network can discover each other and delegate tasks with ping-pong prevention.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ””</div>
+      <div class="card-body">
+        <div class="card-title">Notification System</div>
+        <div class="card-desc">Admin broadcasts and bug report replies delivered to users. Dashboard shows dismissable notification cards with read state tracking.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">âœ…</div>
+      <div class="card-body">
+        <div class="card-title">Telegram Approval Loop Fixed</div>
+        <div class="card-desc">Permanently fixed the recurring approval loop. BLOCKED tool results replaced correctly after approval. System jobs bypass approval gates.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">â±ï¸</div>
+      <div class="card-body">
+        <div class="card-title">Scheduler Heartbeat</div>
+        <div class="card-desc">Electron-driven 60-second tick ensures cron jobs actually execute. Overdue catch-up on app launch. isSystemJob bypass for Identity Maintenance.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ“±</div>
+      <div class="card-body">
+        <div class="card-title">Theme Responsive Fixes</div>
+        <div class="card-desc">Hamburger menus for Snowfield and Neon themes on mobile. Obsidian tablet overlap fixed at 1024px breakpoint. Custom Skills in all mobile menus.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ“…</div>
+      <div class="card-body">
+        <div class="card-title">Calendar & Widget Fixes</div>
+        <div class="card-desc">Fixed "Invalid Date" for Google Calendar events. Planner sync errors resolved. Weather widget uses device geolocation with Vienna fallback.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ“§</div>
+      <div class="card-body">
+        <div class="card-title">Newsletter Subscriptions</div>
+        <div class="card-desc">Email subscriptions now transmitted to server. Opt-in with explicit consent. 9 languages, 1745 translation keys fully synced.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       SHIPPED â€“ v7.2.0 THE NEXT CHAPTER
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="release-header" style="margin-top: 3rem;">
+    <span class="release-tag" style="color:var(--green);background:var(--green-dim);border-color:var(--green-border);">Shipped</span>
+    <div>
+      <div class="release-title">v7.2.0 â€” The Next Chapter <span style="font-size:0.75em;opacity:0.6;font-weight:400;">March 2026</span></div>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">ðŸ“Š</div>
+      <div class="card-body">
+        <div class="card-title">Dashboard Widgets</div>
+        <div class="card-desc">Customizable drag-and-drop dashboard with resizable widgets (clock, weather, system stats, quick actions, recent chats, tasks, notes, pomodoro). Powered by react-grid-layout with per-widget settings.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">â°</div>
+      <div class="card-body">
+        <div class="card-title">Cron Scheduling</div>
+        <div class="card-desc">Natural-language and cron-syntax task scheduling with job management UI, execution logs, and retry support. Jobs stored and managed with full visibility.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸŒ</div>
+      <div class="card-body">
+        <div class="card-title">Browser Tool</div>
+        <div class="card-desc">Built-in Puppeteer browser for web research and interaction. Sandboxed with user approval flow and screenshot capture for autonomous web tasks.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ¤–</div>
+      <div class="card-body">
+        <div class="card-title">Always-On Agent [BETA]</div>
+        <div class="card-desc">Background agent that monitors and executes scheduled tasks autonomously. Toggle in Settings > Advanced.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸŽ™ï¸</div>
+      <div class="card-body">
+        <div class="card-title">Live Duplex Voice - Call Mode [BETA]</div>
+        <div class="card-desc">Full-screen VAD-based continuous voice conversation. STT > LLM > TTS pipeline with barge-in support, waveform visualization, and end-call keyword detection.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ¤</div>
+      <div class="card-body">
+        <div class="card-title">Multi-Agent Swarm [ALPHA]</div>
+        <div class="card-desc">LAN peer discovery via mDNS. Discover other Hands Free instances on the network, view status, and send tasks. Hidden behind Settings > Advanced > Experimental.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ“±</div>
+      <div class="card-body">
+        <div class="card-title">PWA Mobile + Tailscale [BETA]</div>
+        <div class="card-desc">Progressive Web App manifest with installable icons. /mobile page with 4-step Tailscale setup wizard and QR code for phone access.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ“</div>
+      <div class="card-body">
+        <div class="card-title">Feedback Page Upgrade</div>
+        <div class="card-desc">View your own bug reports with status badges (open, in progress, closed). Optional email field on bug reports. Newsletter opt-in in onboarding and settings.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       SHIPPED â€“ v7.1.0 THE LOCAL AI UPDATE
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="release-header" style="margin-top: 3rem;">
+    <span class="release-tag" style="color:var(--green);background:var(--green-dim);border-color:var(--green-border);">Shipped</span>
+    <div>
+      <div class="release-title">v7.1.0 â€” The Local AI Update <span style="font-size:0.75em;opacity:0.6;font-weight:400;">March 2026</span></div>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">ðŸ–¥ï¸</div>
+      <div class="card-body">
+        <div class="card-title">KoboldCpp / LM Studio First-Class</div>
+        <div class="card-desc">KoboldCpp, LM Studio, and vLLM are now first-class provider options in onboarding. No longer hidden under "Custom Endpoint."</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸŽ™ï¸</div>
+      <div class="card-body">
+        <div class="card-title">Local TTS/STT Endpoints</div>
+        <div class="card-desc">Voice settings now support local TTS servers (KoboldCpp, XTTS-API-Server) and Whisper for local speech-to-text transcription.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ–¼ï¸</div>
+      <div class="card-body">
+        <div class="card-title">Local Image Generation</div>
+        <div class="card-desc">Configurable image generation endpoint alongside Replicate. Run image models locally without cloud APIs.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       SHIPPED â€“ v7.0.1 HOTFIX
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="release-header" style="margin-top: 3rem;">
+    <span class="release-tag" style="color:var(--green);background:var(--green-dim);border-color:var(--green-border);">Shipped</span>
+    <div>
+      <div class="release-title">v7.0.1 â€” Hotfix <span style="font-size:0.75em;opacity:0.6;font-weight:400;">March 2026</span></div>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">ðŸ¤–</div>
+      <div class="card-body">
+        <div class="card-title">Telegram Bot Process Fix</div>
+        <div class="card-desc">Fixed bot process crash on end-user machines. Bot now uses Electron's built-in Node runtime instead of requiring system Node.js installation.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ’¬</div>
+      <div class="card-body">
+        <div class="card-title">Chat Frozen & Vision Fallback Fixes</div>
+        <div class="card-desc">Fixed chat becoming unresponsive after vision model error. Session history is now sanitized before every API call. Vision fallback strips images gracefully when models don't support vision.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">â±ï¸</div>
+      <div class="card-body">
+        <div class="card-title">Streaming Timeout Protection</div>
+        <div class="card-desc">Added 60-second inactivity timeout to prevent chat UI from hanging permanently on broken API responses.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       SHIPPED â€“ v7.0.0 THE FOUNDATION
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="release-header" style="margin-top: 3rem;">
+    <span class="release-tag" style="color:var(--green);background:var(--green-dim);border-color:var(--green-border);">Shipped</span>
+    <div>
+      <div class="release-title">v7.0.0 â€” The Foundation <span style="font-size:0.75em;opacity:0.6;font-weight:400;">March 2026</span></div>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">ðŸ¤–</div>
+      <div class="card-body">
+        <div class="card-title">Proactive Desktop Buddy</div>
+        <div class="card-desc">Rule-based buddy intelligence observes calendar, email, tasks, and idle time. Meeting reminders, end-of-day summaries, idle check-ins, morning greetings. Respects quiet hours with no LLM calls.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ“…</div>
+      <div class="card-body">
+        <div class="card-title">Planner AI</div>
+        <div class="card-desc">AI-powered daily scheduling with 8-step wizard. Learns work patterns, generates time-blocked plans from calendar events, pushes them back to your calendar.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ“†</div>
+      <div class="card-body">
+        <div class="card-title">Calendar Abstraction</div>
+        <div class="card-desc">Google Calendar, Apple Calendar (CalDAV/iCloud), and Outlook (Microsoft Graph API). All three work simultaneously. Planner AI reads from all providers.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ“¤</div>
+      <div class="card-body">
+        <div class="card-title">FTP/SFTP Deploy</div>
+        <div class="card-desc">Upload Hands Free Studio projects to any FTP server. Per-project deploy config, incremental upload (only changed files), test connection, 4 website starter templates.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸŒ</div>
+      <div class="card-body">
+        <div class="card-title">7 Languages</div>
+        <div class="card-desc">English, German, Spanish, French, Russian, Chinese (Simplified), Japanese. Full UI translation including onboarding and system prompts.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ“‚</div>
+      <div class="card-body">
+        <div class="card-title">File Sandbox</div>
+        <div class="card-desc">Three modes: Unrestricted, Workspace Only, Custom Folders. Enforced on all file tools for safer file access control.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ“œ</div>
+      <div class="card-body">
+        <div class="card-title">Morning Briefing</div>
+        <div class="card-desc">Daily digest of calendar events, pending tasks, and unread emails delivered via Telegram and chat.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸŽ¯</div>
+      <div class="card-body">
+        <div class="card-title">Redesigned Onboarding</div>
+        <div class="card-desc">7-step wizard with Cloud/Local/Custom provider cards, Ollama auto-detect, buddy picker, and safety mode selection.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       SHIPPED â€“ v6.2.0 THE TELEGRAM FIX
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="release-header" style="margin-top: 3rem;">
+    <span class="release-tag" style="color:var(--green);background:var(--green-dim);border-color:var(--green-border);">Shipped</span>
+    <div>
+      <div class="release-title">v6.2.0 â€” The Telegram Fix <span style="font-size:0.75em;opacity:0.6;font-weight:400;">March 2026</span></div>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">ðŸ’¬</div>
+      <div class="card-body">
+        <div class="card-title">Telegram Approval Loop Fixed</div>
+        <div class="card-desc">Fixed endless Telegram approval loop. 9 tools missing from TOOL_SAFETY map now properly handled. Read-only tools no longer require repeated approval.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ”§</div>
+      <div class="card-body">
+        <div class="card-title">Tool Safety Improvements</div>
+        <div class="card-desc">TOOL_SAFETY fallback changed from 'confirm' to 'auto'. Session history now preserves tool results with orphan protection.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸŽ™ï¸</div>
+      <div class="card-body">
+        <div class="card-title">Google Translate TTS Fix</div>
+        <div class="card-desc">Fixed hardcoded German language setting. Now uses user's configured nativeLanguage/locale for TTS generation.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       SHIPPED â€“ v6.1.1 HOTFIX
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="release-header" style="margin-top: 3rem;">
+    <span class="release-tag" style="color:var(--green);background:var(--green-dim);border-color:var(--green-border);">Shipped</span>
+    <div>
+      <div class="release-title">v6.1.1 â€” Hotfix <span style="font-size:0.75em;opacity:0.6;font-weight:400;">March 2026</span></div>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">ðŸ”§</div>
+      <div class="card-body">
+        <div class="card-title">Telemetry & Settings Fixes</div>
+        <div class="card-desc">Fixed telemetry key mismatch. /api/settings endpoint now exposes telemetry_enabled. Feedback page uses correct URL. Feature Request textarea is now editable.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸŽ¨</div>
+      <div class="card-body">
+        <div class="card-title">Skin & Language Changes</div>
+        <div class="card-desc">Skin/language change now prompts for restart with Electron relaunch support. Chat input focus preserved across sessions.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ“±</div>
+      <div class="card-body">
+        <div class="card-title">Mobile & Privacy Fixes</div>
+        <div class="card-desc">White screen on mobile Chrome tab switch via Tailscale fixed. Privacy section consolidated into Security & Privacy tab.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       SHIPPED â€“ v6.1.0 THE AWAKENING
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="release-header" style="margin-top: 3rem;">
+    <span class="release-tag" style="color:var(--green);background:var(--green-dim);border-color:var(--green-border);">Shipped</span>
+    <div>
+      <div class="release-title">v6.1.0 â€” The Awakening <span style="font-size:0.75em;opacity:0.6;font-weight:400;">March 2026</span></div>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">â°</div>
+      <div class="card-body">
+        <div class="card-title">Autopilot Recurring Task Scheduling</div>
+        <div class="card-desc">Master Plan now generates cron jobs for recurring goals. "Check my email every morning at 8am" creates an actual scheduled task, not a one-shot.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸŽ¬</div>
+      <div class="card-body">
+        <div class="card-title">Live Execution View</div>
+        <div class="card-desc">New tab in Autopilot dashboard shows real-time agent reasoning, tool calls, and results as they happen. Watch Hands Free think in real-time.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ“¤</div>
+      <div class="card-body">
+        <div class="card-title">Telegram Approval for Autopilot</div>
+        <div class="card-desc">Approve or reject Autopilot tasks directly from Telegram. Reply `approve <id>` or `reject <id>`, or simple `yes`/`no` for single pending tasks.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ’§</div>
+      <div class="card-body">
+        <div class="card-title">Bubbles Mascot Skin</div>
+        <div class="card-desc">Meet Bubbles â€” a playful blue liquid blob that morphs into different shapes. Selectable in Settings â†’ Desktop Buddy alongside the original Handy the Gecko.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ“</div>
+      <div class="card-body">
+        <div class="card-title">Feedback & Rating System</div>
+        <div class="card-desc">New /feedback page with 3 sections: Rate Hands Free (4 emoji ratings), Report a Bug, Request a Feature. GDPR compliant data handling.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       SHIPPED â€“ v6.0.2
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="release-header" style="margin-top: 3rem;">
+    <span class="release-tag" style="color:var(--green);background:var(--green-dim);border-color:var(--green-border);">Shipped</span>
+    <div>
+      <div class="release-title">v6.0.2 <span style="font-size:0.75em;opacity:0.6;font-weight:400;">March 2026</span></div>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">ðŸ”’</div>
+      <div class="card-body">
+        <div class="card-title">Critical Security Fixes</div>
+        <div class="card-desc">Telegram approval gate respects safety mode. Inline keyboard buttons replaced with text-based approval. Agent no longer hallucinates tool execution. Telemetry opt-in enforcement at API level.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ§¹</div>
+      <div class="card-body">
+        <div class="card-title">Message Sanitization</div>
+        <div class="card-desc">Orphaned tool_result blocks no longer crash API. Message sanitization in agentDecide() removes tool_results referencing non-existent tool_calls.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ“±</div>
+      <div class="card-body">
+        <div class="card-title">Telegram Reset & Images</div>
+        <div class="card-desc">Reset All button purges Telegram data. Replicate images now save to workspace/files/images/ correctly. Bubbles mascot skin added.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       SHIPPED â€“ v6.0.1
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="release-header" style="margin-top: 3rem;">
+    <span class="release-tag" style="color:var(--green);background:var(--green-dim);border-color:var(--green-border);">Shipped</span>
+    <div>
+      <div class="release-title">v6.0.1 <span style="font-size:0.75em;opacity:0.6;font-weight:400;">March 2026</span></div>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">ðŸ›¡ï¸</div>
+      <div class="card-body">
+        <div class="card-title">Safety Mode Simplification</div>
+        <div class="card-desc">Safety Mode simplified to Safe + Unrestricted (removed confusing Advanced mode). Approval flow no longer stalls. Agent loop continues after approval (ReAct continuation).</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ’¬</div>
+      <div class="card-body">
+        <div class="card-title">Telegram Messaging Fixes</div>
+        <div class="card-desc">Telegram bot shows proper messages instead of raw translation keys. Markdown formatting cleaned before sending. Inline buttons appear correctly.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸŽ¨</div>
+      <div class="card-body">
+        <div class="card-title">Agent & Feature Improvements</div>
+        <div class="card-desc">Agent executes immediately instead of explaining. Platform-aware system prompt with PowerShell vs bash rules. Enhanced anonymous telemetry with opt-in control.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       SHIPPED â€“ v6.0.0 THE FOUNDATION
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="release-header" style="margin-top: 3rem;">
+    <span class="release-tag" style="color:var(--green);background:var(--green-dim);border-color:var(--green-border);">Shipped</span>
+    <div>
+      <div class="release-title">v6.0.0 â€” The Foundation <span style="font-size:0.75em;opacity:0.6;font-weight:400;">March 2026</span></div>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">ðŸŒ</div>
+      <div class="card-body">
+        <div class="card-title">Multilingual (4 Languages)</div>
+        <div class="card-desc">Full UI translation: English, Deutsch, EspaÃ±ol, FranÃ§ais. Language picker as first onboarding screen. System messages, approval prompts, and error messages translated.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ–¼ï¸</div>
+      <div class="card-body">
+        <div class="card-title">Replicate Integration</div>
+        <div class="card-desc">BYOK access to 50+ image and video AI models with one API key. Bring-your-own-key for image generation.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ”Œ</div>
+      <div class="card-body">
+        <div class="card-title">Custom Endpoint</div>
+        <div class="card-desc">Supports llama.cpp, LM Studio, vLLM, koboldcpp, text-generation-webui. Tool calling toggle for custom endpoints (on/off for local models).</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ¦Ž</div>
+      <div class="card-body">
+        <div class="card-title">Desktop Buddy v2</div>
+        <div class="card-desc">Smooth 150ms crossfade transitions. Dynamic folder system. Full skin system. Buddy can execute tools: write files, send emails, browse, manage calendar.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ”’</div>
+      <div class="card-body">
+        <div class="card-title">Privacy & Feedback System</div>
+        <div class="card-desc">Anonymous telemetry opt-in (disabled by default). Bug report button with system info. Feedback sent to developer via collect.php.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       SHIPPED â€“ v5.5.0
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="release-header" style="margin-top: 3rem;">
+    <span class="release-tag" style="color:var(--green);background:var(--green-dim);border-color:var(--green-border);">Shipped</span>
+    <div>
+      <div class="release-title">v5.5.0 <span style="font-size:0.75em;opacity:0.6;font-weight:400;">March 2026</span></div>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">ðŸ›¡ï¸</div>
+      <div class="card-body">
+        <div class="card-title">Approval System Enforcement</div>
+        <div class="card-desc">Destructive actions (send email, delete file, calendar changes, tweets) now require explicit user confirmation. Browser blacklist prevents bypasses. Unrestricted Mode properly bypasses approval gate.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">â™¿</div>
+      <div class="card-body">
+        <div class="card-title">Accessibility Features</div>
+        <div class="card-desc">ARIA labels on all interactive UI elements. Full keyboard navigation with visible focus indicators. Screen reader support via aria-live regions. Compatible with NVDA and VoiceOver.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ¦Ž</div>
+      <div class="card-body">
+        <div class="card-title">Desktop Buddy Enhancements</div>
+        <div class="card-desc">Friendly error messages. Video transition flickering fixed. Honest responses when tools unavailable. Button reliability improvements.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       SHIPPED â€“ v5.0.0 THE DESKTOP COMPANION UPDATE
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="release-header" style="margin-top: 3rem;">
+    <span class="release-tag" style="color:var(--green);background:var(--green-dim);border-color:var(--green-border);">Shipped</span>
+    <div>
+      <div class="release-title">v5.0.0 â€” The Desktop Companion Update <span style="font-size:0.75em;opacity:0.6;font-weight:400;">March 2026</span></div>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">ðŸ¦Ž</div>
+      <div class="card-body">
+        <div class="card-title">Desktop Buddy</div>
+        <div class="card-desc">Floating mascot with finite state machine animations. Glassmorphism input field for Spotlight quick action. AI response bubbles with auto-dismiss. Settings toggle for always-on desktop companion.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ¤–</div>
+      <div class="card-body">
+        <div class="card-title">Autopilot - Autonomous Agent</div>
+        <div class="card-desc">Deep-dive interview learning your goals. Master Plan generation with task list. OODA self-correction loop. Human-in-the-loop approval gates. Anti-loop protocol with retry tracking. Daily stand-up report. Execution Board Kanban interface.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸŽ™ï¸</div>
+      <div class="card-body">
+        <div class="card-title">Voice Chat</div>
+        <div class="card-desc">Microphone button for voice input. Fullscreen voice chat mode with status labels. Groq/OpenAI Whisper transcription. ElevenLabs TTS with browser fallback.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ§©</div>
+      <div class="card-body">
+        <div class="card-title">Custom Skills Ecosystem</div>
+        <div class="card-desc">ZIP upload to install custom capabilities. AI scaffolding generates skill definitions automatically. Skills page with enable/disable, metadata view, deletion. Sandboxed execution.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ“„</div>
+      <div class="card-body">
+        <div class="card-title">Document Generation</div>
+        <div class="card-desc">Word (.docx), PDF, and Excel (.xlsx) generation from natural language. Fully-formatted documents saved to DATA_DIR/documents/.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ—ºï¸</div>
+      <div class="card-body">
+        <div class="card-title">Google Places</div>
+        <div class="card-desc">Nearby search, place details, geocoding, directions, and photo URLs. Pure REST API implementation without native binaries.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       THE LOCAL AI UPDATE (LEGACY SECTION)
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="release-header" style="margin-top: 3rem;">
+    <span class="release-tag" style="color:var(--green);background:var(--green-dim);border-color:var(--green-border);">Shipped</span>
+    <div>
+      <div class="release-title">v7 Era Features</div>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">ðŸŒ</div>
+      <div class="card-body">
+        <div class="card-title">9 Languages</div>
+        <div class="card-desc">English, German, Spanish, French, Russian, Chinese, Japanese, Korean, Portuguese. Full UI translations with proper locale formatting.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ”Œ</div>
+      <div class="card-body">
+        <div class="card-title">OpenAI Compatible Endpoint</div>
+        <div class="card-desc">Connect KoboldCpp, LM Studio, vLLM, and other OpenAI-compatible local LLM servers directly to Hands Free.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸŽ™ï¸</div>
+      <div class="card-body">
+        <div class="card-title">Local TTS, STT, and Image Generation</div>
+        <div class="card-desc">Offline text-to-speech, speech-to-text, and image generation powered by local models. No external API calls required.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ’¬</div>
+      <div class="card-body">
+        <div class="card-title">Telegram, Discord, WhatsApp Bots</div>
+        <div class="card-desc">Chat with Hands Free across your favorite messaging platforms. Unified conversation history and skill access.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ¦Ž</div>
+      <div class="card-body">
+        <div class="card-title">Desktop Buddy with 3 Skins</div>
+        <div class="card-desc">Hands Free (gecko), Bubbles (blob), and Capy mascots. Animated, interactive desktop companions with customizable behaviors.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ“…</div>
+      <div class="card-body">
+        <div class="card-title">Planner AI with Calendar Sync</div>
+        <div class="card-desc">LLM-generated schedules with Google Calendar, Apple CalDAV, and Outlook integration. One-click sync to calendar.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ’»</div>
+      <div class="card-body">
+        <div class="card-title">Hands Free Studio Code Builder with FTP/SFTP Deploy</div>
+        <div class="card-desc">Build web applications with AI, then deploy directly to FTP or SFTP servers. Supports all major hosting providers.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ“‚</div>
+      <div class="card-body">
+        <div class="card-title">File Sandbox and Safe Mode</div>
+        <div class="card-desc">Controlled file access with read-only, read+write, and full modes. Protect your system with granular permissions.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ¤–</div>
+      <div class="card-body">
+        <div class="card-title">Autopilot (Autonomous ReAct Task Execution)</div>
+        <div class="card-desc">Enable autonomous task execution with full reasoning transparency. Hands Free breaks down complex tasks and executes them step-by-step.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ“§</div>
+      <div class="card-body">
+        <div class="card-title">Email Management (IMAP/SMTP)</div>
+        <div class="card-desc">Read, compose, and send emails through your IMAP and SMTP accounts. Seamless email integration within Hands Free.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ§ </div>
+      <div class="card-body">
+        <div class="card-title">Memory System (Persistent Context)</div>
+        <div class="card-desc">Hands Free remembers your preferences, past conversations, and important context. Build on knowledge across sessions.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       COMING SOON
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="release-header" style="margin-top: 3rem;">
+    <span class="release-tag" style="color:var(--blue);background:var(--blue-dim);border-color:var(--blue-border);">Coming Soon</span>
+    <div>
+      <div class="release-title">What's Next</div>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">ðŸ“Š</div>
+      <div class="card-body">
+        <div class="card-title">Smart Morning Dashboard</div>
+        <div class="card-desc">Personalized daily digest with weather, calendar events, tasks, and memory highlights at a glance.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ“¬</div>
+      <div class="card-body">
+        <div class="card-title">Newsletter & Update Notifications</div>
+        <div class="card-desc">Stay informed with curated newsletters and product updates delivered directly to Hands Free.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸŽ¤</div>
+      <div class="card-body">
+        <div class="card-title">Buddy Speech Improvements</div>
+        <div class="card-desc">Enhanced voice synthesis and more natural conversational responses from your Desktop Buddy.</div>
+      </div>
+      <div class="card-status status-open">Coming Soon</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ“±</div>
+      <div class="card-body">
+        <div class="card-title">PWA Mobile Support (via Tailscale)</div>
+        <div class="card-desc">Access Hands Free from any mobile device on your network through a Progressive Web App.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ‘¥</div>
+      <div class="card-body">
+        <div class="card-title">Community Platform</div>
+        <div class="card-desc">Connect with other Hands Free users, share skills, and collaborate on automation ideas.</div>
+      </div>
+      <div class="card-status status-open">Coming Soon</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸªŸ</div>
+      <div class="card-body">
+        <div class="card-title">Windows Code Signing</div>
+        <div class="card-desc">EV code signing certificate for Windows builds. No more SmartScreen warnings on first launch.</div>
+      </div>
+      <div class="card-status status-open">Coming Soon</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ§©</div>
+      <div class="card-body">
+        <div class="card-title">agentskills.io Marketplace</div>
+        <div class="card-desc">Public marketplace for browsing, publishing, and installing Agent Skills. One-click import into Hands Free.</div>
+      </div>
+      <div class="card-status status-open">Coming Soon</div>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       v8.0.2 â€” Latest
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="release-header" style="margin-top: 3rem;">
+    <span class="release-tag" style="color:var(--blue);background:rgba(59,130,246,0.08);border-color:rgba(59,130,246,0.3);">Coming Soon</span>
+    <div>
+      <div class="release-title">v8.0.2 â€” Latest</div>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">ðŸ’¾</div>
+      <div class="card-body">
+        <div class="card-title">Database Migration (PostgreSQL/SQLite)</div>
+        <div class="card-desc">Flexible database backend selection. Choose PostgreSQL for cloud deployments or SQLite for lightweight local setups. Easy migration tools included.</div>
+      </div>
+      <div class="card-status status-open">Coming Soon</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ›ï¸</div>
+      <div class="card-body">
+        <div class="card-title">Plugin Marketplace</div>
+        <div class="card-desc">Discover and install community-created plugins with one click. Rate, review, and manage your installed plugins from a centralized marketplace.</div>
+      </div>
+      <div class="card-status status-open">Coming Soon</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ”Œ</div>
+      <div class="card-body">
+        <div class="card-title">MCP Server Integration</div>
+        <div class="card-desc">Native support for Model Context Protocol servers. Connect advanced tools and services directly to your Hands Free instance for enhanced capabilities.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       v8.0 â€” SHIPPED
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="release-header" style="margin-top: 3rem;">
+    <span class="release-tag" style="color:var(--green);background:var(--green-dim);border-color:var(--green-border);">Shipped</span>
+    <div>
+      <div class="release-title">v8.0 â€” Shipped</div>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">âœ¨</div>
+      <div class="card-body">
+        <div class="card-title">v8.0 â€” Discover 2.0</div>
+        <div class="card-desc">Social feed, Hands Free Wrapped, Token Compressor, Friend Mode, Safety Mode improvements, Spotlight full tool access. See v8.0.0 section above.</div>
+      </div>
+      <div class="card-status status-shipped">âœ“ Shipped</div>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       FUTURE
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="release-header" style="margin-top: 3rem;">
+    <span class="release-tag" style="color:var(--amber);background:var(--amber-dim);border-color:var(--amber-border);">Future</span>
+    <div>
+      <div class="release-title">The Vision</div>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">ðŸ“²</div>
+      <div class="card-body">
+        <div class="card-title">Mobile Companion App</div>
+        <div class="card-desc">Native iOS and Android app for managing tasks, reviewing briefings, and controlling Autopilot from anywhere.</div>
+      </div>
+      <div class="card-status status-planned">Future</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">ðŸ›’</div>
+      <div class="card-body">
+        <div class="card-title">Agent Marketplace</div>
+        <div class="card-desc">Discover, install, and manage community-built skills, integrations, and custom agents from a curated marketplace.</div>
+      </div>
+      <div class="card-status status-planned">Future</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">â˜ï¸</div>
+      <div class="card-body">
+        <div class="card-title">Cloud Sync</div>
+        <div class="card-desc">End-to-end encrypted sync of memory, settings, and custom skills across all your devices. Optional and never required.</div>
+      </div>
+      <div class="card-status status-planned">Future</div>
+    </div>
+  </div>
+</div><!-- /content -->
+
+<footer>
+  <span class="gecko">ðŸ¦Ž</span>
+  <div style="margin-bottom: 12px;">
+    <a href="https://x.com/handsfree_ai">X</a> Â·
+    <a href="https://instagram.com/handsfree.app">Instagram</a> Â·
+    <a href="https://tiktok.com/@handsfree.app">TikTok</a> Â·
+    <a href="https://youtube.com/@handsfreeai">YouTube</a>
+  </div>
+  <div style="margin-bottom: 12px;">
+    <a href="https://handsfree.app">handsfree.app</a> Â·
+    <a href="https://github.com/handsfree-ai/hands-free">github.com/handsfree-ai/hands-free</a>
+  </div>
+  <div style="margin-bottom: 8px; color: var(--text-dim); font-size: 12px;">Hands Free v9.0.0 â€” For the People</div>
+  Made by <strong>Mario Simic</strong>
+</footer>
+
+</body>
+</html>

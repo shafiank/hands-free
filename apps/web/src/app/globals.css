@@ -1,0 +1,354 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light Mode — Clean & Friendly */
+    --background: #f8fafc;
+    --surface: #ffffff;
+    --surface-light: #f1f5f9;
+    --surface-hover: #e8edf3;
+    --foreground: #0f172a;
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+    --border: #e2e8f0;
+    --border-light: #f1f5f9;
+    --accent-color: #84cc16;
+    --accent-hover: #65a30d;
+    --accent-glow: rgba(132, 204, 22, 0.15);
+    --input: #e2e8f0;
+    --ring: #84cc16;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --success: #22c55e;
+    --info: #3b82f6;
+    --sidebar-bg: #ffffff;
+    --sidebar-border: #e2e8f0;
+    --sidebar-hover: #f1f5f9;
+    --sidebar-active: rgba(132, 204, 22, 0.08);
+    --radius: 0.75rem;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  }
+
+  .dark {
+    /* Dark Mode — Premium tech look */
+    --background: #09090b;
+    --surface: #18181b;
+    --surface-light: #27272a;
+    --surface-hover: #303035;
+    --foreground: #fafafa;
+    --text-primary: #fafafa;
+    --text-secondary: #a1a1aa;
+    --text-muted: #71717a;
+    --border: #27272a;
+    --border-light: #1e1e22;
+    --accent-color: #84cc16;
+    --accent-hover: #a3e635;
+    --accent-glow: rgba(132, 204, 22, 0.12);
+    --input: #27272a;
+    --ring: #84cc16;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --success: #22c55e;
+    --info: #3b82f6;
+    --sidebar-bg: #0f0f12;
+    --sidebar-border: #27272a;
+    --sidebar-hover: #1c1c22;
+    --sidebar-active: rgba(132, 204, 22, 0.08);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+  }
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-color);
+}
+
+/* ─── Layout ─── */
+.app-shell {
+  display: flex;
+  height: 100vh;
+  height: 100dvh; /* dynamic viewport height — adjusts for mobile browser chrome */
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 260px;
+  min-width: 260px;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 40;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-collapsed {
+  width: 80px;
+  min-width: 80px;
+}
+
+/* Hide text in collapsed mode */
+.sidebar-collapsed .sidebar-text {
+  display: none;
+}
+
+.sidebar-collapsed .sidebar-icon-only {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 260px;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Content area inside main-content: scrollable, fills remaining flex space */
+.main-content-scroll {
+  flex: 1;
+  min-height: 0;          /* required: lets flex child shrink below content size */
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.main-content-collapsed {
+  margin-left: 80px;
+}
+
+.main-content-expanded {
+  margin-left: 80px;
+}
+
+/* ─── Animations ─── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-4px); }
+}
+
+.animate-fadeIn { animation: fadeIn 0.4s ease-out forwards; }
+
+/* Memory recall flash — pulses 3 times then fades out (total ~2.1s) */
+@keyframes memoryFlash {
+  0%   { opacity: 1; transform: scale(1);    }
+  15%  { opacity: 1; transform: scale(1.25); }
+  30%  { opacity: 0.6; transform: scale(1);  }
+  50%  { opacity: 1; transform: scale(1.25); }
+  65%  { opacity: 0.6; transform: scale(1);  }
+  80%  { opacity: 1; transform: scale(1.15); }
+  100% { opacity: 0; transform: scale(0.8);  }
+}
+.animate-memory-flash { animation: memoryFlash 2.1s ease-in-out forwards; }
+.animate-slideInLeft { animation: slideInLeft 0.3s ease-out forwards; }
+.animate-slideInRight { animation: slideInRight 0.3s ease-out forwards; }
+.animate-scaleIn { animation: scaleIn 0.3s ease-out forwards; }
+.animate-pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
+.animate-float { animation: float 3s ease-in-out infinite; }
+.animate-bounce-slow { animation: float 4s ease-in-out infinite; }
+
+.shimmer {
+  background: linear-gradient(90deg, transparent 0%, var(--accent-glow) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+/* ─── Stagger children animation ─── */
+.stagger-children > * {
+  opacity: 0;
+  animation: fadeIn 0.4s ease-out forwards;
+}
+.stagger-children > *:nth-child(1) { animation-delay: 0.05s; }
+.stagger-children > *:nth-child(2) { animation-delay: 0.1s; }
+.stagger-children > *:nth-child(3) { animation-delay: 0.15s; }
+.stagger-children > *:nth-child(4) { animation-delay: 0.2s; }
+.stagger-children > *:nth-child(5) { animation-delay: 0.25s; }
+.stagger-children > *:nth-child(6) { animation-delay: 0.3s; }
+.stagger-children > *:nth-child(7) { animation-delay: 0.35s; }
+.stagger-children > *:nth-child(8) { animation-delay: 0.4s; }
+
+/* ─── Glass card ─── */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.dark .glass {
+  background: rgba(24, 24, 27, 0.7);
+  border-color: rgba(39, 39, 42, 0.5);
+}
+
+/* ─── Status Badge ─── */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.status-dot.online {
+  background: var(--success);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+}
+.status-dot.offline {
+  background: var(--danger);
+}
+.status-dot.pending {
+  background: var(--warning);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* ─── Card Hover ─── */
+.card-interactive {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.card-interactive:hover {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 1px var(--accent-glow), var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+/* ─── Connection Badge ─── */
+.connection-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.connection-badge.connected {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+.connection-badge.disconnected {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-260px);
+  }
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+  .main-content {
+    margin-left: 0;
+  }
+}
+
+/* ─── Accessibility: Focus Indicators ──────────────────────────────────────────
+   Visible keyboard focus ring on all interactive elements.
+   Uses :focus-visible so mouse clicks don't show the ring (only Tab key).
+   ─────────────────────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--ring, #84cc16);
+  outline-offset: 2px;
+}
+/* Remove default outline only when our custom ring is active */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+/* Tailwind's focus:outline-none suppresses the ring — restore it */
+.focus\:outline-none:focus-visible {
+  outline: 2px solid var(--ring, #84cc16);
+  outline-offset: 2px;
+}
+
+/* ─── Accessibility: Skip-to-main link ──────────────────────────────────────
+   Hidden off-screen until focused by keyboard (Tab from address bar).
+   ─────────────────────────────────────────────────────────────────────────── */
+.skip-to-main {
+  position: fixed;
+  top: -100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  padding: 10px 18px;
+  background: var(--accent-color, #84cc16);
+  color: #000;
+  font-weight: 700;
+  font-size: 14px;
+  border-radius: 0 0 10px 10px;
+  text-decoration: none;
+  transition: top 0.15s ease;
+  white-space: nowrap;
+}
+.skip-to-main:focus {
+  top: 0;
+  outline: 2px solid #000;
+  outline-offset: 2px;
+}

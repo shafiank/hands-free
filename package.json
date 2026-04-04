@@ -1,0 +1,29 @@
+{
+  "name": "hands-free",
+  "version": "7.1.0",
+  "description": "Hands Free - Your local-first desktop AI agent",
+  "author": "Mario Simic",
+  "homepage": "https://handsfree.app",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "electron .",
+    "bundle:bots": "node scripts/bundle-bots.js",
+    "pack:deps": "node scripts/pack-deps.js",
+    "build:web": "cd apps/web && npm run build",
+    "build:win": "npm run bundle:bots && npm run build:web && npm run pack:deps && electron-builder --win",
+    "build:mac": "npm run bundle:bots && npm run build:web && electron-builder --mac",
+    "build:linux": "npm run bundle:bots && npm run build:web && electron-builder --linux",
+    "build:all": "npm run bundle:bots && npm run build:web && electron-builder --win --mac --linux",
+    "start:web": "cd apps/web && npm run dev",
+    "postinstall": "cd apps/web && npm install --legacy-peer-deps"
+  },
+  "dependencies": {
+    "electron-updater": "^6.1.0",
+    "electron-store": "^8.1.0"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.0",
+    "esbuild": "^0.20.0"
+  }
+}
