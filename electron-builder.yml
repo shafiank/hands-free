@@ -1,6 +1,7 @@
 # electron-builder.yml
 # Hands Free v7.1.0 â€” Production Build Configuration
 # Docs: https://www.electron.build/configuration/configuration
+#starting
 
 appId: app.handsfree.desktop
 productName: Hands Free
