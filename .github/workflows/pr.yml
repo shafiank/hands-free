@@ -40,21 +40,70 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+          
+DASHBOARD_API_URL: ${{ secrets.DASHBOARD_API_URL }}
           PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
+
+          # Helper function to send events to dashboard
+          send_event() {
+            local review_id="$1"
+            local event_type="$2"
+            local step="$3"
+            local duration="${4:-0}"
+            local message="${5:-}"
+            local review_content="${6:-}"
+            local verdict="${7:-}"
+
+            if [ -n "${DASHBOARD_API_URL:-}" ]; then
+              curl -s -X POST "${DASHBOARD_API_URL}/api/reviews/${review_id}/event" \
+                -H "Content-Type: application/json" \
+                -d "$(jq -n \
+                  --arg type "$event_type" \
+                  --arg step "$step" \
+                  --argjson duration "$duration" \
+                  --arg message "$message" \
+                  --arg review "$review_content" \
+                  --arg verdict "$verdict" \
+                  '{type: $type, step: $step, duration: $duration, message: $message, review: $review, verdict: $verdict}')" \
+                || true
+            fi
+          }
 
           echo "Reviewing PR #${PR_NUMBER} with Mistral"
 
           # Get PR details
           PR_TITLE=$(gh pr view "${PR_NUMBER}" --json title -q '.title')
           PR_BODY=$(gh pr view "${PR_NUMBER}" --json body -q '.body' | head -c 2000)
+          PR_URL="https://github.com/${GITHUB_REPOSITORY}/pull/${PR_NUMBER}"
+
+          # Start review in dashboard
+          REVIEW_ID=""
+          if [ -n "${DASHBOARD_API_URL:-}" ]; then
+            REVIEW_ID=$(curl -s -X POST "${DASHBOARD_API_URL}/api/reviews/start" \
+              -H "Content-Type: application/json" \
+              -d "$(jq -n \
+                --arg repo "$GITHUB_REPOSITORY" \
+                --argjson prNumber "$PR_NUMBER" \
+                --arg prTitle "$PR_TITLE" \
+                --arg prUrl "$PR_URL" \
+                '{repo: $repo, prNumber: $prNumber, prTitle: $prTitle, prUrl: $prUrl}')" \
+              | jq -r '.id // empty') || true
+            echo "Dashboard review ID: ${REVIEW_ID:-not available}"
+          fi
+
+          # Send checkout event
+          [ -n "$REVIEW_ID" ] && send_event "$REVIEW_ID" "step" "Checkout repository" 2
 
           # Get the diff (limit size for API)
           PR_DIFF=$(gh pr diff "${PR_NUMBER}" | head -c 30000)
 
           echo "PR Title: ${PR_TITLE}"
           echo "Diff size: $(echo "${PR_DIFF}" | wc -c) bytes"
+
+          [ -n "$REVIEW_ID" ] && send_event "$REVIEW_ID" "step" "Checkout PR branch" 2
 
           # Build the prompt
           REVIEW_PROMPT="You are an expert code reviewer. Review this pull request and provide constructive feedback.
@@ -91,6 +140,8 @@ jobs:
           # Escape the prompt for JSON
           ESCAPED_PROMPT=$(echo "${REVIEW_PROMPT}" | jq -Rs .)
 
+          START_TIME=$(date +%s)
+
           # Call Mistral API
           RESPONSE=$(curl -s -X POST "https://api.mistral.ai/v1/chat/completions" \
             -H "Content-Type: application/json" \
@@ -107,10 +158,21 @@ jobs:
               \"max_tokens\": 2000
             }")
 
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+
           # Check for API errors
           if echo "${RESPONSE}" | jq -e '.error' > /dev/null 2>&1; then
             echo "Mistral API error:"
             echo "${RESPONSE}" | jq '.error'
+            [ -n "$REVIEW_ID" ] && send_event "$REVIEW_ID" "error" "Run AI Review with Mistral" "$DURATION" "Mistral API error"
+
+            # Complete review as failed
+            if [ -n "${DASHBOARD_API_URL:-}" ] && [ -n "$REVIEW_ID" ]; then
+              curl -s -X POST "${DASHBOARD_API_URL}/api/reviews/${REVIEW_ID}/complete" \
+                -H "Content-Type: application/json" \
+                -d '{"status": "failed"}' || true
+            fi
             exit 1
           fi
 
@@ -120,6 +182,13 @@ jobs:
           if [ -z "${REVIEW_CONTENT}" ] || [ "${REVIEW_CONTENT}" = "null" ]; then
             echo "Error: Empty response from Mistral"
             echo "Full response: ${RESPONSE}"
+            [ -n "$REVIEW_ID" ] && send_event "$REVIEW_ID" "error" "Run AI Review with Mistral" "$DURATION" "Empty response from Mistral"
+
+            if [ -n "${DASHBOARD_API_URL:-}" ] && [ -n "$REVIEW_ID" ]; then
+              curl -s -X POST "${DASHBOARD_API_URL}/api/reviews/${REVIEW_ID}/complete" \
+                -H "Content-Type: application/json" \
+                -d '{"status": "failed"}' || true
+            fi
             exit 1
           fi
 
@@ -128,7 +197,6 @@ jobs:
           echo "================="
 
           # Determine verdict - look for exact pattern on its own line
-          # This avoids false matches from the word appearing elsewhere
           VERDICT="COMMENT"
           if echo "${REVIEW_CONTENT}" | grep -qiE "^\*?\*?Verdict\*?\*?:?\s*(APPROVE|LGTM)"; then
             VERDICT="APPROVE"
@@ -138,6 +206,16 @@ jobs:
 
           echo "Detected Verdict: ${VERDICT}"
 
+          # Send AI review event with content
+          if [ -n "$REVIEW_ID" ]; then
+            # Escape review content for JSON
+            ESCAPED_REVIEW=$(echo "${REVIEW_CONTENT}" | jq -Rs .)
+            curl -s -X POST "${DASHBOARD_API_URL}/api/reviews/${REVIEW_ID}/event" \
+              -H "Content-Type: application/json" \
+              -d "{\"type\": \"step\", \"step\": \"Run AI Review with Mistral\", \"duration\": ${DURATION}, \"review\": ${ESCAPED_REVIEW}, \"verdict\": \"${VERDICT}\"}" \
+              || true
+          fi
+
           # Build review body
           REVIEW_BODY="## AI Code Review (Mistral)
 
@@ -146,12 +224,11 @@ jobs:
           ---
           *Automated review by Mistral AI*"
 
-          # Submit the review
-          # Note: GitHub Actions cannot approve PRs by default (security setting)
-          # To enable: Repo Settings → Actions → General → "Allow GitHub Actions to approve pull requests"
+          # Submit the review to GitHub
+          [ -n "$REVIEW_ID" ] && send_event "$REVIEW_ID" "step" "Post Checkout repository" 0
+
           case "${VERDICT}" in
             "APPROVE")
-              # Try to approve, fall back to comment if not allowed
               if ! gh pr review "${PR_NUMBER}" --approve --body "${REVIEW_BODY}" 2>/dev/null; then
                 echo "Note: Cannot approve (disabled in repo settings). Posting as comment instead."
                 gh pr review "${PR_NUMBER}" --comment --body "${REVIEW_BODY}"
@@ -167,3 +244,14 @@ jobs:
               echo "Review submitted: COMMENT"
               ;;
           esac
+
+          # Complete review in dashboard
+          if [ -n "${DASHBOARD_API_URL:-}" ] && [ -n "$REVIEW_ID" ]; then
+            ESCAPED_REVIEW=$(echo "${REVIEW_CONTENT}" | jq -Rs .)
+            curl -s -X POST "${DASHBOARD_API_URL}/api/reviews/${REVIEW_ID}/complete" \
+              -H "Content-Type: application/json" \
+              -d "{\"status\": \"completed\", \"review\": ${ESCAPED_REVIEW}, \"verdict\": \"${VERDICT}\"}" \
+              || true
+          fi
+
+          echo "Review complete!"
