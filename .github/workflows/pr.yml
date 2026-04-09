@@ -1,4 +1,4 @@
-name: AI PR Review (Mistral)
+name: Bugzee PR Review (Mistral)
 
 on:
   pull_request:
@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   review:
-    name: AI Code Review
+    name: Bugzee Code Review
     runs-on: ubuntu-latest
 
     permissions:
