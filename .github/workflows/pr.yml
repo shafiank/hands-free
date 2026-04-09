@@ -1,0 +1,169 @@
+name: AI PR Review (Mistral)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to review'
+        required: true
+        type: number
+
+concurrency:
+  group: pr-review-${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    name: AI Code Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || !github.event.pull_request.draft
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Checkout PR branch
+        if: github.event_name == 'pull_request'
+        run: gh pr checkout ${{ github.event.pull_request.number }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run AI Review with Mistral
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+          PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+        run: |
+          set -euo pipefail
+
+          echo "Reviewing PR #${PR_NUMBER} with Mistral"
+
+          # Get PR details
+          PR_TITLE=$(gh pr view "${PR_NUMBER}" --json title -q '.title')
+          PR_BODY=$(gh pr view "${PR_NUMBER}" --json body -q '.body' | head -c 2000)
+
+          # Get the diff (limit size for API)
+          PR_DIFF=$(gh pr diff "${PR_NUMBER}" | head -c 30000)
+
+          echo "PR Title: ${PR_TITLE}"
+          echo "Diff size: $(echo "${PR_DIFF}" | wc -c) bytes"
+
+          # Build the prompt
+          REVIEW_PROMPT="You are an expert code reviewer. Review this pull request and provide constructive feedback.
+
+          ## PR Title
+          ${PR_TITLE}
+
+          ## PR Description
+          ${PR_BODY}
+
+          ## Code Diff
+          \`\`\`diff
+          ${PR_DIFF}
+          \`\`\`
+
+          ## Instructions
+          Review the code changes for:
+          1. **Correctness**: Does the code do what it's supposed to?
+          2. **Bugs**: Any potential bugs, edge cases, or logic errors?
+          3. **Security**: Any security vulnerabilities?
+          4. **Performance**: Any performance issues?
+          5. **Code Quality**: Is the code clean, readable, and maintainable?
+
+          Provide your review in this format:
+
+          **Summary**: A brief overall assessment (1-2 sentences)
+
+          **Verdict**: APPROVE, REQUEST_CHANGES, or COMMENT
+
+          **Details**: Specific feedback with line references where applicable
+
+          Be constructive and specific. Only flag real issues, not style nitpicks."
+
+          # Escape the prompt for JSON
+          ESCAPED_PROMPT=$(echo "${REVIEW_PROMPT}" | jq -Rs .)
+
+          # Call Mistral API
+          RESPONSE=$(curl -s -X POST "https://api.mistral.ai/v1/chat/completions" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${MISTRAL_API_KEY}" \
+            -d "{
+              \"model\": \"mistral-large-latest\",
+              \"messages\": [
+                {
+                  \"role\": \"user\",
+                  \"content\": ${ESCAPED_PROMPT}
+                }
+              ],
+              \"temperature\": 0.3,
+              \"max_tokens\": 2000
+            }")
+
+          # Check for API errors
+          if echo "${RESPONSE}" | jq -e '.error' > /dev/null 2>&1; then
+            echo "Mistral API error:"
+            echo "${RESPONSE}" | jq '.error'
+            exit 1
+          fi
+
+          # Extract the review content
+          REVIEW_CONTENT=$(echo "${RESPONSE}" | jq -r '.choices[0].message.content')
+
+          if [ -z "${REVIEW_CONTENT}" ] || [ "${REVIEW_CONTENT}" = "null" ]; then
+            echo "Error: Empty response from Mistral"
+            echo "Full response: ${RESPONSE}"
+            exit 1
+          fi
+
+          echo "=== AI Review ==="
+          echo "${REVIEW_CONTENT}"
+          echo "================="
+
+          # Determine verdict - look for exact pattern on its own line
+          # This avoids false matches from the word appearing elsewhere
+          VERDICT="COMMENT"
+          if echo "${REVIEW_CONTENT}" | grep -qiE "^\*?\*?Verdict\*?\*?:?\s*(APPROVE|LGTM)"; then
+            VERDICT="APPROVE"
+          elif echo "${REVIEW_CONTENT}" | grep -qiE "^\*?\*?Verdict\*?\*?:?\s*REQUEST_CHANGES"; then
+            VERDICT="REQUEST_CHANGES"
+          fi
+
+          echo "Detected Verdict: ${VERDICT}"
+
+          # Build review body
+          REVIEW_BODY="## AI Code Review (Mistral)
+
+          ${REVIEW_CONTENT}
+
+          ---
+          *Automated review by Mistral AI*"
+
+          # Submit the review
+          # Note: GitHub Actions cannot approve PRs by default (security setting)
+          # To enable: Repo Settings → Actions → General → "Allow GitHub Actions to approve pull requests"
+          case "${VERDICT}" in
+            "APPROVE")
+              # Try to approve, fall back to comment if not allowed
+              if ! gh pr review "${PR_NUMBER}" --approve --body "${REVIEW_BODY}" 2>/dev/null; then
+                echo "Note: Cannot approve (disabled in repo settings). Posting as comment instead."
+                gh pr review "${PR_NUMBER}" --comment --body "${REVIEW_BODY}"
+              fi
+              echo "Review submitted: APPROVED (or comment fallback)"
+              ;;
+            "REQUEST_CHANGES")
+              gh pr review "${PR_NUMBER}" --request-changes --body "${REVIEW_BODY}"
+              echo "Review submitted: CHANGES REQUESTED"
+              ;;
+            *)
+              gh pr review "${PR_NUMBER}" --comment --body "${REVIEW_BODY}"
+              echo "Review submitted: COMMENT"
+              ;;
+          esac
