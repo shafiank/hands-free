@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>Hands Free</h1>
+  <h1>"Hands Free"</h1>
   <p><strong>Your local-first desktop AI agent for Windows, macOS, and Linux.</strong></p>
   <p>
     One-click desktop experience, OpenAI-first for fast hackathon setup, and Ollama-first when you want private local mode.
