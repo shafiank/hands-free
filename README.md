@@ -20,6 +20,7 @@
 
 ## Release and Downloads
 
+
 - Releases: [GitHub Releases](https://github.com/shafiank/hands-free/releases)
 - Windows: EXE installer artifact in latest release
 - macOS: DMG artifact in latest release
@@ -28,6 +29,7 @@
 ## Watch It In Action
 
 Click the preview to open the demo video: doneee save us 
+
 
 watch this out
 ## Interactive Gallery
