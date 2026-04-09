@@ -29,7 +29,7 @@
 
 Click the preview to open the demo video:
 
-[![Hands Free demo](https://img.youtube.com/vi/k83NlptVmfc/maxresdefault.jpg)](https://www.youtube.com/watch?v=k83NlptVmfc)
+[![Hands Free demo]()
 
 ## Interactive Gallery
 
