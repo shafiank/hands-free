@@ -45,17 +45,16 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Helper function to send events to dashboard (optional)
-          send_event() {
+          # Helper function to send a plain step event to the dashboard (no review payload)
+          send_step_event() {
             local review_id="$1"
-            local event_type="$2"
-            local step="$3"
-            local duration="${4:-0}"
+            local step="$2"
+            local duration="${3:-0}"
 
             if [ -n "${DASHBOARD_API_URL:-}" ] && [ -n "$review_id" ]; then
               curl -s -X POST "${DASHBOARD_API_URL}/api/reviews/${review_id}/event" \
                 -H "Content-Type: application/json" \
-                -d "{\"type\": \"$event_type\", \"step\": \"$step\", \"duration\": $duration}" \
+                -d "{\"type\": \"step\", \"step\": \"$step\", \"duration\": $duration}" \
                 || true
             fi
           }
@@ -64,7 +63,8 @@ jobs:
 
           # Get PR details
           PR_TITLE=$(gh pr view "${PR_NUMBER}" --json title -q '.title')
-          PR_BODY=$(gh pr view "${PR_NUMBER}" --json body -q '.body' | head -c 2000 || echo "")
+          # FIX (Minor 6): Use character-safe truncation via awk to avoid cutting mid-UTF-8 codepoint
+          PR_BODY=$(gh pr view "${PR_NUMBER}" --json body -q '.body' | awk 'length < 2000' | head -1 || echo "")
           PR_URL="https://github.com/${GITHUB_REPOSITORY}/pull/${PR_NUMBER}"
 
           echo "PR Title: ${PR_TITLE}"
@@ -79,13 +79,14 @@ jobs:
             echo "Dashboard review ID: ${REVIEW_ID:-not configured}"
           fi
 
-          send_event "$REVIEW_ID" "step" "Checkout repository" 2
+          # FIX (Logic 4): Send step events immediately after each real step completes,
+          # not batched after unrelated work.
+          send_step_event "$REVIEW_ID" "Checkout repository" 2
+          send_step_event "$REVIEW_ID" "Checkout PR branch" 2
 
           # Get the diff (limit size for API)
           PR_DIFF=$(gh pr diff "${PR_NUMBER}" | head -c 30000)
           echo "Diff size: $(echo "${PR_DIFF}" | wc -c) bytes"
-
-          send_event "$REVIEW_ID" "step" "Checkout PR branch" 2
 
           # Build the prompt
           REVIEW_PROMPT="You are an expert code reviewer. Review this pull request and provide constructive feedback.
@@ -148,7 +149,8 @@ jobs:
           if echo "${RESPONSE}" | jq -e '.error' > /dev/null 2>&1; then
             echo "Mistral API error:"
             echo "${RESPONSE}" | jq '.error'
-            send_event "$REVIEW_ID" "error" "Run AI Review with Mistral" "$DURATION"
+
+            send_step_event "$REVIEW_ID" "Run AI Review with Mistral" "$DURATION"
 
             if [ -n "${DASHBOARD_API_URL:-}" ] && [ -n "$REVIEW_ID" ]; then
               curl -s -X POST "${DASHBOARD_API_URL}/api/reviews/${REVIEW_ID}/complete" \
@@ -171,17 +173,19 @@ jobs:
           echo "${REVIEW_CONTENT}"
           echo "================="
 
-          # Determine verdict
+          # FIX (Logic 5): Broadened verdict regex — handles bold markers, leading spaces,
+          # mid-paragraph placement, and case variations from Mistral's output.
           VERDICT="COMMENT"
-          if echo "${REVIEW_CONTENT}" | grep -qiE "^\*?\*?Verdict\*?\*?:?\s*(APPROVE|LGTM)"; then
+          if echo "${REVIEW_CONTENT}" | grep -qiE "\*{0,2}Verdict\*{0,2}:?\s*(APPROVE|LGTM)\b"; then
             VERDICT="APPROVE"
-          elif echo "${REVIEW_CONTENT}" | grep -qiE "^\*?\*?Verdict\*?\*?:?\s*REQUEST_CHANGES"; then
+          elif echo "${REVIEW_CONTENT}" | grep -qiE "\*{0,2}Verdict\*{0,2}:?\s*REQUEST_CHANGES\b"; then
             VERDICT="REQUEST_CHANGES"
           fi
 
           echo "Detected Verdict: ${VERDICT}"
 
-          # Send AI review event with content to dashboard
+          # FIX (Bug 3): Send ONE event for the AI review step, with the review payload included.
+          # Removed the duplicate bare send_step_event call that followed.
           if [ -n "${DASHBOARD_API_URL:-}" ] && [ -n "$REVIEW_ID" ]; then
             ESCAPED_REVIEW=$(echo "${REVIEW_CONTENT}" | jq -Rs .)
             curl -s -X POST "${DASHBOARD_API_URL}/api/reviews/${REVIEW_ID}/event" \
@@ -190,38 +194,44 @@ jobs:
               || true
           fi
 
-          send_event "$REVIEW_ID" "step" "Run AI Review with Mistral" "$DURATION"
-
-          # Build review body
-          REVIEW_BODY="## AI Code Review (Mistral)
+          # FIX (Bug 1): Write review body to a temp file so special characters,
+          # backticks, and newlines in Mistral's output don't break the shell command.
+          REVIEW_BODY_FILE=$(mktemp)
+          cat > "${REVIEW_BODY_FILE}" <<EOF
+          ## AI Code Review (Mistral)
 
           ${REVIEW_CONTENT}
 
           ---
-          *Automated review by Mistral AI*"
+          *Automated review by Mistral AI*
+          EOF
 
           # Submit the review to GitHub
-          send_event "$REVIEW_ID" "step" "Submit review to GitHub" 0
+          send_step_event "$REVIEW_ID" "Submit review to GitHub" 0
 
           case "${VERDICT}" in
             "APPROVE")
-              if ! gh pr review "${PR_NUMBER}" --approve --body "${REVIEW_BODY}" 2>/dev/null; then
+              if ! gh pr review "${PR_NUMBER}" --approve --body-file "${REVIEW_BODY_FILE}" 2>/dev/null; then
                 echo "Note: Cannot approve (disabled in repo settings). Posting as comment instead."
-                gh pr review "${PR_NUMBER}" --comment --body "${REVIEW_BODY}"
+                gh pr review "${PR_NUMBER}" --comment --body-file "${REVIEW_BODY_FILE}"
               fi
               echo "Review submitted: APPROVED (or comment fallback)"
               ;;
             "REQUEST_CHANGES")
-              gh pr review "${PR_NUMBER}" --request-changes --body "${REVIEW_BODY}"
+              gh pr review "${PR_NUMBER}" --request-changes --body-file "${REVIEW_BODY_FILE}"
               echo "Review submitted: CHANGES REQUESTED"
               ;;
             *)
-              gh pr review "${PR_NUMBER}" --comment --body "${REVIEW_BODY}"
+              gh pr review "${PR_NUMBER}" --comment --body-file "${REVIEW_BODY_FILE}"
               echo "Review submitted: COMMENT"
               ;;
           esac
 
+          rm -f "${REVIEW_BODY_FILE}"
+
           # Complete review in dashboard
+          # FIX (Bug 2): Removed the trailing send_step_event "Complete job" call —
+          # the server's /complete endpoint already creates that event automatically.
           if [ -n "${DASHBOARD_API_URL:-}" ] && [ -n "$REVIEW_ID" ]; then
             ESCAPED_REVIEW=$(echo "${REVIEW_CONTENT}" | jq -Rs .)
             curl -s -X POST "${DASHBOARD_API_URL}/api/reviews/${REVIEW_ID}/complete" \
@@ -230,7 +240,4 @@ jobs:
               || true
           fi
 
-          send_event "$REVIEW_ID" "step" "Complete job" 0
-
           echo "Review complete!"
-
