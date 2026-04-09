@@ -63,6 +63,8 @@ Hands Free is an AI agent that lives on your desktop. Not in a browser tab, not 
 
 A 6-year-old built a game with it. A Developer approved the setup.
 
+this how we do it
+
 | Category | Typical Agent Setup | Hands Free |
 |---|---|---|
 | First run | CLI + Docker + env setup | Desktop app flow |
