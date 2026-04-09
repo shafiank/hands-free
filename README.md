@@ -16,7 +16,7 @@
 ## Watch It In Action
 
 Click the preview to open the demo video:
-
+ now watch this 
 
 ## Interactive Gallery
 
