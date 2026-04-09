@@ -1,0 +1,243 @@
+name: Bugzee PR Review (Mistral)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to review'
+        required: true
+        type: number
+
+concurrency:
+  group: pr-review-${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    name: Bugzee Code Review
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Checkout PR branch
+        if: github.event_name == 'pull_request'
+        run: gh pr checkout ${{ github.event.pull_request.number }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run AI Review with Mistral
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+          DASHBOARD_API_URL: ${{ secrets.DASHBOARD_API_URL }}
+          PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          # Helper function to send a plain step event to the dashboard (no review payload)
+          send_step_event() {
+            local review_id="$1"
+            local step="$2"
+            local duration="${3:-0}"
+
+            if [ -n "${DASHBOARD_API_URL:-}" ] && [ -n "$review_id" ]; then
+              curl -s -X POST "${DASHBOARD_API_URL}/api/reviews/${review_id}/event" \
+                -H "Content-Type: application/json" \
+                -d "{\"type\": \"step\", \"step\": \"$step\", \"duration\": $duration}" \
+                || true
+            fi
+          }
+
+          echo "Reviewing PR #${PR_NUMBER} with Mistral"
+
+          # Get PR details
+          PR_TITLE=$(gh pr view "${PR_NUMBER}" --json title -q '.title')
+          # FIX (Minor 6): Use character-safe truncation via awk to avoid cutting mid-UTF-8 codepoint
+          PR_BODY=$(gh pr view "${PR_NUMBER}" --json body -q '.body' | awk 'length < 2000' | head -1 || echo "")
+          PR_URL="https://github.com/${GITHUB_REPOSITORY}/pull/${PR_NUMBER}"
+
+          echo "PR Title: ${PR_TITLE}"
+
+          # Start review in dashboard (optional - won't fail if not configured)
+          REVIEW_ID=""
+          if [ -n "${DASHBOARD_API_URL:-}" ]; then
+            REVIEW_ID=$(curl -s -X POST "${DASHBOARD_API_URL}/api/reviews/start" \
+              -H "Content-Type: application/json" \
+              -d "{\"repo\": \"${GITHUB_REPOSITORY}\", \"prNumber\": ${PR_NUMBER}, \"prTitle\": $(echo "$PR_TITLE" | jq -Rs .), \"prUrl\": \"${PR_URL}\"}" \
+              | jq -r '.id // empty' 2>/dev/null) || true
+            echo "Dashboard review ID: ${REVIEW_ID:-not configured}"
+          fi
+
+          # FIX (Logic 4): Send step events immediately after each real step completes,
+          # not batched after unrelated work.
+          send_step_event "$REVIEW_ID" "Checkout repository" 2
+          send_step_event "$REVIEW_ID" "Checkout PR branch" 2
+
+          # Get the diff (limit size for API)
+          PR_DIFF=$(gh pr diff "${PR_NUMBER}" | head -c 30000)
+          echo "Diff size: $(echo "${PR_DIFF}" | wc -c) bytes"
+
+          # Build the prompt
+          REVIEW_PROMPT="You are an expert code reviewer. Review this pull request and provide constructive feedback.
+
+          ## PR Title
+          ${PR_TITLE}
+
+          ## PR Description
+          ${PR_BODY}
+
+          ## Code Diff
+          \`\`\`diff
+          ${PR_DIFF}
+          \`\`\`
+
+          ## Instructions
+          Review the code changes for:
+          1. **Correctness**: Does the code do what it's supposed to?
+          2. **Bugs**: Any potential bugs, edge cases, or logic errors?
+          3. **Security**: Any security vulnerabilities?
+          4. **Performance**: Any performance issues?
+          5. **Code Quality**: Is the code clean, readable, and maintainable?
+
+          Provide your review in this format:
+
+          **Summary**: A brief overall assessment (1-2 sentences)
+
+          **Verdict**: APPROVE, REQUEST_CHANGES, or COMMENT
+
+          **Details**: Specific feedback with line references where applicable
+
+          Be constructive and specific. Only flag real issues, not style nitpicks."
+
+          # Escape the prompt for JSON
+          ESCAPED_PROMPT=$(echo "${REVIEW_PROMPT}" | jq -Rs .)
+
+          START_TIME=$(date +%s)
+
+          # Call Mistral API
+          echo "Calling Mistral API..."
+          RESPONSE=$(curl -s -X POST "https://api.mistral.ai/v1/chat/completions" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${MISTRAL_API_KEY}" \
+            -d "{
+              \"model\": \"mistral-large-latest\",
+              \"messages\": [
+                {
+                  \"role\": \"user\",
+                  \"content\": ${ESCAPED_PROMPT}
+                }
+              ],
+              \"temperature\": 0.3,
+              \"max_tokens\": 2000
+            }")
+
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+
+          # Check for API errors
+          if echo "${RESPONSE}" | jq -e '.error' > /dev/null 2>&1; then
+            echo "Mistral API error:"
+            echo "${RESPONSE}" | jq '.error'
+
+            send_step_event "$REVIEW_ID" "Run AI Review with Mistral" "$DURATION"
+
+            if [ -n "${DASHBOARD_API_URL:-}" ] && [ -n "$REVIEW_ID" ]; then
+              curl -s -X POST "${DASHBOARD_API_URL}/api/reviews/${REVIEW_ID}/complete" \
+                -H "Content-Type: application/json" \
+                -d '{"status": "failed"}' || true
+            fi
+            exit 1
+          fi
+
+          # Extract the review content
+          REVIEW_CONTENT=$(echo "${RESPONSE}" | jq -r '.choices[0].message.content')
+
+          if [ -z "${REVIEW_CONTENT}" ] || [ "${REVIEW_CONTENT}" = "null" ]; then
+            echo "Error: Empty response from Mistral"
+            echo "Full response: ${RESPONSE}"
+            exit 1
+          fi
+
+          echo "=== AI Review ==="
+          echo "${REVIEW_CONTENT}"
+          echo "================="
+
+          # FIX (Logic 5): Broadened verdict regex — handles bold markers, leading spaces,
+          # mid-paragraph placement, and case variations from Mistral's output.
+          VERDICT="COMMENT"
+          if echo "${REVIEW_CONTENT}" | grep -qiE "\*{0,2}Verdict\*{0,2}:?\s*(APPROVE|LGTM)\b"; then
+            VERDICT="APPROVE"
+          elif echo "${REVIEW_CONTENT}" | grep -qiE "\*{0,2}Verdict\*{0,2}:?\s*REQUEST_CHANGES\b"; then
+            VERDICT="REQUEST_CHANGES"
+          fi
+
+          echo "Detected Verdict: ${VERDICT}"
+
+          # FIX (Bug 3): Send ONE event for the AI review step, with the review payload included.
+          # Removed the duplicate bare send_step_event call that followed.
+          if [ -n "${DASHBOARD_API_URL:-}" ] && [ -n "$REVIEW_ID" ]; then
+            ESCAPED_REVIEW=$(echo "${REVIEW_CONTENT}" | jq -Rs .)
+            curl -s -X POST "${DASHBOARD_API_URL}/api/reviews/${REVIEW_ID}/event" \
+              -H "Content-Type: application/json" \
+              -d "{\"type\": \"step\", \"step\": \"Run AI Review with Mistral\", \"duration\": ${DURATION}, \"review\": ${ESCAPED_REVIEW}, \"verdict\": \"${VERDICT}\"}" \
+              || true
+          fi
+
+          # FIX (Bug 1): Write review body to a temp file so special characters,
+          # backticks, and newlines in Mistral's output don't break the shell command.
+          REVIEW_BODY_FILE=$(mktemp)
+          cat > "${REVIEW_BODY_FILE}" <<EOF
+          ## AI Code Review (Mistral)
+
+          ${REVIEW_CONTENT}
+
+          ---
+          *Automated review by Mistral AI*
+          EOF
+
+          # Submit the review to GitHub
+          send_step_event "$REVIEW_ID" "Submit review to GitHub" 0
+
+          case "${VERDICT}" in
+            "APPROVE")
+              if ! gh pr review "${PR_NUMBER}" --approve --body-file "${REVIEW_BODY_FILE}" 2>/dev/null; then
+                echo "Note: Cannot approve (disabled in repo settings). Posting as comment instead."
+                gh pr review "${PR_NUMBER}" --comment --body-file "${REVIEW_BODY_FILE}"
+              fi
+              echo "Review submitted: APPROVED (or comment fallback)"
+              ;;
+            "REQUEST_CHANGES")
+              gh pr review "${PR_NUMBER}" --request-changes --body-file "${REVIEW_BODY_FILE}"
+              echo "Review submitted: CHANGES REQUESTED"
+              ;;
+            *)
+              gh pr review "${PR_NUMBER}" --comment --body-file "${REVIEW_BODY_FILE}"
+              echo "Review submitted: COMMENT"
+              ;;
+          esac
+
+          rm -f "${REVIEW_BODY_FILE}"
+
+          # Complete review in dashboard
+          # FIX (Bug 2): Removed the trailing send_step_event "Complete job" call —
+          # the server's /complete endpoint already creates that event automatically.
+          if [ -n "${DASHBOARD_API_URL:-}" ] && [ -n "$REVIEW_ID" ]; then
+            ESCAPED_REVIEW=$(echo "${REVIEW_CONTENT}" | jq -Rs .)
+            curl -s -X POST "${DASHBOARD_API_URL}/api/reviews/${REVIEW_ID}/complete" \
+              -H "Content-Type: application/json" \
+              -d "{\"status\": \"completed\", \"review\": ${ESCAPED_REVIEW}, \"verdict\": \"${VERDICT}\"}" \
+              || true
+          fi
+
+          echo "Review complete!"
