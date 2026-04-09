@@ -127,17 +127,18 @@ jobs:
           echo "${REVIEW_CONTENT}"
           echo "================="
 
-          # Determine verdict from response
+          # Determine verdict - look for exact pattern on its own line
+          # This avoids false matches from the word appearing elsewhere
           VERDICT="COMMENT"
-          if echo "${REVIEW_CONTENT}" | grep -qi "verdict.*approve"; then
+          if echo "${REVIEW_CONTENT}" | grep -qiE "^\*?\*?Verdict\*?\*?:?\s*(APPROVE|LGTM)"; then
             VERDICT="APPROVE"
-          elif echo "${REVIEW_CONTENT}" | grep -qi "verdict.*request.changes"; then
+          elif echo "${REVIEW_CONTENT}" | grep -qiE "^\*?\*?Verdict\*?\*?:?\s*REQUEST_CHANGES"; then
             VERDICT="REQUEST_CHANGES"
           fi
 
-          echo "Verdict: ${VERDICT}"
+          echo "Detected Verdict: ${VERDICT}"
 
-          # Submit the review
+          # Build review body
           REVIEW_BODY="## AI Code Review (Mistral)
 
           ${REVIEW_CONTENT}
@@ -145,10 +146,17 @@ jobs:
           ---
           *Automated review by Mistral AI*"
 
+          # Submit the review
+          # Note: GitHub Actions cannot approve PRs by default (security setting)
+          # To enable: Repo Settings → Actions → General → "Allow GitHub Actions to approve pull requests"
           case "${VERDICT}" in
             "APPROVE")
-              gh pr review "${PR_NUMBER}" --approve --body "${REVIEW_BODY}"
-              echo "Review submitted: APPROVED"
+              # Try to approve, fall back to comment if not allowed
+              if ! gh pr review "${PR_NUMBER}" --approve --body "${REVIEW_BODY}" 2>/dev/null; then
+                echo "Note: Cannot approve (disabled in repo settings). Posting as comment instead."
+                gh pr review "${PR_NUMBER}" --comment --body "${REVIEW_BODY}"
+              fi
+              echo "Review submitted: APPROVED (or comment fallback)"
               ;;
             "REQUEST_CHANGES")
               gh pr review "${PR_NUMBER}" --request-changes --body "${REVIEW_BODY}"
